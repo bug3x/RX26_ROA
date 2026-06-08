@@ -1,0 +1,27 @@
+/**:
+  ros__parameters:
+
+    # ── force gains ──────────────────────────────────────────────────────────
+    k_att: 1.0          # attractive gain [–]
+    k_rep: 0.5          # repulsive gain  [–]
+    d0:    2.0          # obstacle influence radius [m]
+
+    # ── velocity limits ───────────────────────────────────────────────────────
+    max_surge: 1.0      # maximum forward speed [m/s]
+    max_yaw:   1.0      # maximum yaw rate      [rad/s]
+
+    # ── local-minima escape ───────────────────────────────────────────────────
+    min_force_threshold: 0.05   # |F| below this → potential local minimum
+    local_minima_ticks:  20.0   # consecutive ticks before escape kick
+    escape_perturb_mag:  0.5    # random perturbation magnitude [N·equiv]
+
+    # ── goal ─────────────────────────────────────────────────────────────────
+    goal_tolerance: 0.2         # arrival radius [m]; suppresses false minima near goal
+
+    # ── grid ─────────────────────────────────────────────────────────────────
+    grid_resolution:          0.05   # fallback cell size [m] if grid.info is bad
+    treat_unknown_as_occupied: false # true → repel from unexplored cells
+
+    # ── frames & timing ──────────────────────────────────────────────────────
+    fixed_frame: "map"          # all topics transformed into this frame
+    loop_hz:     10.0           # control-loop frequency [Hz]
