@@ -49,6 +49,8 @@ import numpy as np
 import pytest
 
 
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Minimal ROS 2 stubs
 # ─────────────────────────────────────────────────────────────────────────────
@@ -321,7 +323,7 @@ for _name, _mod in [
 import importlib, pathlib, sys as _sys  # noqa: E402
 
 # Allow running from repo root or alongside the node file
-_node_path = pathlib.Path(__file__).parent / "apf_node.py"
+_node_path = pathlib.Path(__file__).parent.parent / "apf_node_v3.py"
 _spec = importlib.util.spec_from_file_location("apf_node", _node_path)
 apf_module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(apf_module)
