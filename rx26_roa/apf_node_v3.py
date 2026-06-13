@@ -552,10 +552,11 @@ def main(args: list[str] | None = None) -> None:
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        pass
+        pass  # clean exit, no traceback
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():          # ← only shutdown if not already shut down
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":
