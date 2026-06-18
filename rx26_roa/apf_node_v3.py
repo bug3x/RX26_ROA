@@ -66,20 +66,20 @@ from std_msgs.msg import Bool
 
 
 # ── last-resort defaults (prefer config/apf_params.yaml) ────────────────────
-DEFAULT_K_ATT                   = 1.0
-DEFAULT_K_REP                   = 0.5
-DEFAULT_D0                      = 2.0
-DEFAULT_GRID_RESOLUTION         = 0.05   # [m/cell] – fallback only
-DEFAULT_MAX_SURGE               = 1.0    # [m/s]
-DEFAULT_MAX_YAW                 = 1.0    # [rad/s]
-DEFAULT_ESCAPE_PERTURB_MAG      = 0.5
-DEFAULT_LOOP_HZ                 = 10.0
-DEFAULT_GOAL_TOLERANCE          = 0.2    # [m]
-DEFAULT_FIXED_FRAME             = "map"
-DEFAULT_TREAT_UNKNOWN_OCCUPIED  = False
-DEFAULT_REPULSION_ENABLED       = True
-DEFAULT_LM_PROGRESS_WINDOW      = 5.0   # [s]  look-back window for progress check
-DEFAULT_LM_PROGRESS_MIN_DIST    = 0.1   # [m]  minimum progress required in window
+DEFAULT_K_ATT = 1.0
+DEFAULT_K_REP = 0.5
+DEFAULT_D0 = 2.0
+DEFAULT_GRID_RESOLUTION = 0.05   # [m/cell] – fallback only
+DEFAULT_MAX_SURGE = 1.0    # [m/s]
+DEFAULT_MAX_YAW = 1.0    # [rad/s]
+DEFAULT_ESCAPE_PERTURB_MAG = 0.5
+DEFAULT_LOOP_HZ = 10.0
+DEFAULT_GOAL_TOLERANCE = 0.2    # [m]
+DEFAULT_FIXED_FRAME = "map"
+DEFAULT_TREAT_UNKNOWN_OCCUPIED = False
+DEFAULT_REPULSION_ENABLED = True
+DEFAULT_LM_PROGRESS_WINDOW = 5.0   # [s]  look-back window for progress check
+DEFAULT_LM_PROGRESS_MIN_DIST = 0.1   # [m]  minimum progress required in window
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -145,10 +145,10 @@ class APFNode(Node):
         self._load_params()
 
         # ── internal state ───────────────────────────────────────────────────
-        self._grid: OccupancyGrid | None              = None
-        self._grid_cache: tuple | None                = None  # (seq, occ_xy arrays)
-        self._pose: PoseWithCovarianceStamped | None  = None
-        self._goal: PoseStamped | None                = None
+        self._grid: OccupancyGrid | None = None
+        self._grid_cache: tuple | None = None  # (seq, occ_xy arrays)
+        self._pose: PoseWithCovarianceStamped | None = None
+        self._goal: PoseStamped | None = None
 
         # progress-based local-minima tracking
         # stores (timestamp_sec, d_goal) snapshots over the look-back window
@@ -160,7 +160,7 @@ class APFNode(Node):
         self._goal_reached_published: bool = False
 
         # ── tf2 ──────────────────────────────────────────────────────────────
-        self._tf_buffer   = tf2_ros.Buffer()
+        self._tf_buffer = tf2_ros.Buffer()
         self._tf_listener = tf2_ros.TransformListener(self._tf_buffer, self)
 
         # ── QoS ─────────────────────────────────────────────────────────────
@@ -172,17 +172,17 @@ class APFNode(Node):
 
         # ── subscriptions ────────────────────────────────────────────────────
         self.create_subscription(OccupancyGrid,
-                                 "/grid/occupancy",       self._cb_grid, map_qos)
+                                 "/grid/occupancy", self._cb_grid, map_qos)
         self.create_subscription(PoseWithCovarianceStamped,
-                                 "/localization/pose",    self._cb_pose,
+                                 "/localization/pose", self._cb_pose,
                                  qos_profile_sensor_data)
         self.create_subscription(PoseStamped,
                                  "/mission/current_goal", self._cb_goal, 10)
 
         # ── publishers ───────────────────────────────────────────────────────
-        self._pub_cmd          = self.create_publisher(Twist,        "/apf/target_vector", 10)
-        self._pub_debug        = self.create_publisher(TwistStamped, "/apf/debug",         10)
-        self._pub_goal_reached = self.create_publisher(Bool,         "/apf/goal_reached",  10)
+        self._pub_cmd = self.create_publisher(Twist, "/apf/target_vector", 10)
+        self._pub_debug = self.create_publisher(TwistStamped, "/apf/debug", 10)
+        self._pub_goal_reached = self.create_publisher(Bool, "/apf/goal_reached", 10)
 
         # ── timer ────────────────────────────────────────────────────────────
         self.create_timer(1.0 / self._loop_hz, self._control_loop)
@@ -233,26 +233,26 @@ class APFNode(Node):
                 "Minimum goal-distance reduction [m] required within the window "
                 "before a local minimum is declared",
                 0.001, 10.0))
-        self.declare_parameter("fixed_frame",             DEFAULT_FIXED_FRAME)
+        self.declare_parameter("fixed_frame", DEFAULT_FIXED_FRAME)
         self.declare_parameter("treat_unknown_as_occupied", DEFAULT_TREAT_UNKNOWN_OCCUPIED)
-        self.declare_parameter("repulsion_enabled",         DEFAULT_REPULSION_ENABLED)
+        self.declare_parameter("repulsion_enabled", DEFAULT_REPULSION_ENABLED)
 
     def _load_params(self) -> None:
         gp = self.get_parameter
-        self._k_att                     = gp("k_att").value
-        self._k_rep                     = gp("k_rep").value
-        self._d0                        = gp("d0").value
-        self._grid_resolution           = gp("grid_resolution").value
-        self._max_surge                 = gp("max_surge").value
-        self._max_yaw                   = gp("max_yaw").value
-        self._escape_perturb_mag        = gp("escape_perturb_mag").value
-        self._loop_hz                   = gp("loop_hz").value
-        self._goal_tolerance            = gp("goal_tolerance").value
-        self._lm_progress_window        = gp("lm_progress_window").value
-        self._lm_progress_min_dist      = gp("lm_progress_min_dist").value
-        self._fixed_frame               = gp("fixed_frame").value
+        self._k_att = gp("k_att").value
+        self._k_rep = gp("k_rep").value
+        self._d0 = gp("d0").value
+        self._grid_resolution = gp("grid_resolution").value
+        self._max_surge = gp("max_surge").value
+        self._max_yaw = gp("max_yaw").value
+        self._escape_perturb_mag = gp("escape_perturb_mag").value
+        self._loop_hz = gp("loop_hz").value
+        self._goal_tolerance = gp("goal_tolerance").value
+        self._lm_progress_window = gp("lm_progress_window").value
+        self._lm_progress_min_dist = gp("lm_progress_min_dist").value
+        self._fixed_frame = gp("fixed_frame").value
         self._treat_unknown_as_occupied = gp("treat_unknown_as_occupied").value
-        self._repulsion_enabled         = gp("repulsion_enabled").value
+        self._repulsion_enabled = gp("repulsion_enabled").value
 
     # ── subscriber callbacks ─────────────────────────────────────────────────
     def _cb_grid(self, msg: OccupancyGrid) -> None:
@@ -265,7 +265,7 @@ class APFNode(Node):
     def _cb_goal(self, msg: PoseStamped) -> None:
         self._goal = msg
         self._progress_history.clear()
-        self._local_minima_counter  = 0
+        self._local_minima_counter = 0
         self._goal_reached_published = False
 
     # ── frame helpers ─────────────────────────────────────────────────────────
@@ -280,7 +280,7 @@ class APFNode(Node):
         try:
             ps = PoseStamped()
             ps.header = msg.header
-            ps.pose   = msg.pose.pose
+            ps.pose = msg.pose.pose
             out = self._tf_buffer.transform(
                 ps, self._fixed_frame,
                 timeout=rclpy.duration.Duration(seconds=0.05))
@@ -335,12 +335,12 @@ class APFNode(Node):
         if self._grid_cache is not None and self._grid_cache[0] == seq:
             return self._grid_cache[1], self._grid_cache[2]
 
-        info       = grid.info
+        info = grid.info
         resolution = info.resolution if info.resolution > 0.0 else self._grid_resolution
-        origin_x   = info.origin.position.x
-        origin_y   = info.origin.position.y
-        width      = info.width
-        height     = info.height
+        origin_x = info.origin.position.x
+        origin_y = info.origin.position.y
+        width = info.width
+        height = info.height
 
         data = np.frombuffer(bytes(grid.data), dtype=np.int8).reshape((height, width))
 
@@ -374,7 +374,7 @@ class APFNode(Node):
 
         dx = pose_x - cell_x
         dy = pose_y - cell_y
-        d  = np.hypot(dx, dy)
+        d = np.hypot(dx, dy)
 
         in_range = (d >= 1e-3) & (d <= self._d0)
         dx, dy, d = dx[in_range], dy[in_range], d[in_range]
@@ -409,7 +409,7 @@ class APFNode(Node):
             return False
 
         oldest_d = self._progress_history[0][1]
-        best_d   = min(d for _, d in self._progress_history)
+        best_d = min(d for _, d in self._progress_history)
         progress = oldest_d - best_d   # positive = robot is getting closer
 
         stuck = progress < self._lm_progress_min_dist
@@ -422,8 +422,8 @@ class APFNode(Node):
     # ── local-minima escape ───────────────────────────────────────────────────
     def _apply_escape_perturbation(self, f: Vector2D) -> Vector2D:
         angle = random.uniform(0.0, 2.0 * math.pi)
-        f.x  += self._escape_perturb_mag * math.cos(angle)
-        f.y  += self._escape_perturb_mag * math.sin(angle)
+        f.x += self._escape_perturb_mag * math.cos(angle)
+        f.y += self._escape_perturb_mag * math.sin(angle)
         return f
 
     # ── publishers ────────────────────────────────────────────────────────────
@@ -432,7 +432,7 @@ class APFNode(Node):
 
     def _publish_goal_reached(self) -> None:
         """Publish Bool(True) every tick while inside goal_tolerance (latched behaviour)."""
-        msg      = Bool()
+        msg = Bool()
         msg.data = True
         self._pub_goal_reached.publish(msg)
         if not self._goal_reached_published:
@@ -445,15 +445,17 @@ class APFNode(Node):
         d_goal: float,
     ) -> None:
         msg = TwistStamped()
-        msg.header.stamp    = self.get_clock().now().to_msg()
+        msg.header.stamp = self.get_clock().now().to_msg()
         msg.header.frame_id = self._fixed_frame
         # linear  → force magnitudes
-        msg.twist.linear.x  = f_total.magnitude
-        msg.twist.linear.y  = f_att.magnitude
-        msg.twist.linear.z  = f_rep.magnitude
+        msg.twist.linear.x = f_total.magnitude
+        msg.twist.linear.y = f_att.magnitude
+        msg.twist.linear.z = f_rep.magnitude
         # angular → diagnostics
-        msg.twist.angular.x = float(self._progress_history[0][1] - min(d for _, d in self._progress_history)
-                                    if len(self._progress_history) >= 2 else 0.0)
+        msg.twist.angular.x = float(
+            self._progress_history[0][1] - min(
+                d for _, d in self._progress_history) if len(
+                self._progress_history) >= 2 else 0.0)
         msg.twist.angular.y = d_goal
         msg.twist.angular.z = float(self._local_minima_counter)
         self._pub_debug.publish(msg)
@@ -523,17 +525,17 @@ class APFNode(Node):
             self._local_minima_counter = 0
 
         # ── force → surge / yaw ──────────────────────────────────────────────
-        f_mag           = f_total.magnitude
+        f_mag = f_total.magnitude
         desired_heading = math.atan2(f_total.y, f_total.x)
-        heading_error   = wrap_to_pi(desired_heading - theta)
+        heading_error = wrap_to_pi(desired_heading - theta)
 
         # Vessel yaws first, then surges (USV dynamics — intentional).
         surge = clamp(f_mag * math.cos(heading_error), 0.0, self._max_surge)
-        yaw   = clamp(heading_error, -self._max_yaw, self._max_yaw)
+        yaw = clamp(heading_error, -self._max_yaw, self._max_yaw)
 
         # ── publish ───────────────────────────────────────────────────────────
-        cmd           = Twist()
-        cmd.linear.x  = surge
+        cmd = Twist()
+        cmd.linear.x = surge
         cmd.angular.z = yaw
         self._pub_cmd.publish(cmd)
 
