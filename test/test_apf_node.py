@@ -1,5 +1,5 @@
 """
-test_apf_node.py – pytest suite for apf_node.py
+test_apf_node.py – pytest suite for apf_node_v3.py
 
 Strategy
 --------
@@ -38,6 +38,8 @@ Test coverage
 """
 
 from __future__ import annotations
+import pathlib
+import importlib
 
 import math
 import sys
@@ -47,8 +49,6 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
-
-
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -68,135 +68,159 @@ class _Vector3:
     def __init__(self):
         self.x = self.y = self.z = 0.0
 
+
 class _Quaternion:
     def __init__(self):
         self.x = self.y = self.z = 0.0
         self.w = 1.0
 
+
 class _Point:
     def __init__(self):
         self.x = self.y = self.z = 0.0
 
+
 class _Pose:
     def __init__(self):
-        self.position    = _Point()
+        self.position = _Point()
         self.orientation = _Quaternion()
+
 
 class _PoseWithCovariance:
     def __init__(self):
         self.pose = _Pose()
 
+
 class _Header:
     def __init__(self):
         self.frame_id = "map"
-        self.stamp    = MagicMock()
+        self.stamp = MagicMock()
+
 
 class _PoseStamped:
     def __init__(self):
         self.header = _Header()
-        self.pose   = _Pose()
+        self.pose = _Pose()
+
 
 class _PoseWithCovarianceStamped:
     def __init__(self):
         self.header = _Header()
-        self.pose   = _PoseWithCovariance()
+        self.pose = _PoseWithCovariance()
+
 
 class _Twist:
     def __init__(self):
-        self.linear  = _Vector3()
+        self.linear = _Vector3()
         self.angular = _Vector3()
+
 
 class _TwistStamped:
     def __init__(self):
         self.header = _Header()
-        self.twist  = _Twist()
+        self.twist = _Twist()
+
 
 class _Bool:
     def __init__(self):
         self.data = False
 
+
 class _MapInfo:
     def __init__(self):
         self.resolution = 0.1
-        self.width      = 10
-        self.height     = 10
-        self.origin     = _Pose()
+        self.width = 10
+        self.height = 10
+        self.origin = _Pose()
+
 
 class _OccupancyGrid:
     def __init__(self):
         self.header = _Header()
-        self.info   = _MapInfo()
-        self.data   = [0] * 100  # 10×10 grid, all free
+        self.info = _MapInfo()
+        self.data = [0] * 100  # 10×10 grid, all free
+
 
 geometry_msgs_msg = _make_stub_module(
     "geometry_msgs.msg",
-    PoseStamped               = _PoseStamped,
-    PoseWithCovarianceStamped = _PoseWithCovarianceStamped,
-    Twist                     = _Twist,
-    TwistStamped              = _TwistStamped,
+    PoseStamped=_PoseStamped,
+    PoseWithCovarianceStamped=_PoseWithCovarianceStamped,
+    Twist=_Twist,
+    TwistStamped=_TwistStamped,
 )
 geometry_msgs = _make_stub_module("geometry_msgs")
 geometry_msgs.msg = geometry_msgs_msg
 
 nav_msgs_msg = _make_stub_module("nav_msgs.msg", OccupancyGrid=_OccupancyGrid)
-nav_msgs     = _make_stub_module("nav_msgs")
+nav_msgs = _make_stub_module("nav_msgs")
 nav_msgs.msg = nav_msgs_msg
 
 std_msgs_msg = _make_stub_module("std_msgs.msg", Bool=_Bool)
-std_msgs     = _make_stub_module("std_msgs")
+std_msgs = _make_stub_module("std_msgs")
 std_msgs.msg = std_msgs_msg
 
 # ── rcl_interfaces (parameter bounds) ────────────────────────────────────────
 
+
 class _FloatingPointRange:
     def __init__(self, from_value=0.0, to_value=1.0, step=0.0):
         self.from_value = from_value
-        self.to_value   = to_value
-        self.step       = step
+        self.to_value = to_value
+        self.step = step
+
 
 class _ParameterDescriptor:
     def __init__(self, **kwargs):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
+
 class _ParameterType:
     PARAMETER_DOUBLE = 3
 
+
 rcl_interfaces_msg = _make_stub_module(
     "rcl_interfaces.msg",
-    FloatingPointRange  = _FloatingPointRange,
-    ParameterDescriptor = _ParameterDescriptor,
-    ParameterType       = _ParameterType,
+    FloatingPointRange=_FloatingPointRange,
+    ParameterDescriptor=_ParameterDescriptor,
+    ParameterType=_ParameterType,
 )
 rcl_interfaces = _make_stub_module("rcl_interfaces")
 rcl_interfaces.msg = rcl_interfaces_msg
 
 # ── rclpy ────────────────────────────────────────────────────────────────────
 
+
 class _ParameterValue:
     def __init__(self, v):
         self._v = v
+
     @property
     def value(self):
         return self._v
 
+
 class _Parameter:
     def __init__(self, name, value):
-        self.name  = name
-        self._val  = value
+        self.name = name
+        self._val = value
+
     @property
     def value(self):
         return self._val
 
+
 DEFAULTS = {}  # populated per-node in the fixture
+
 
 class _Node:
     """Minimal rclpy.Node stub – enough for APFNode.__init__ to succeed."""
+
     def __init__(self, name):
-        self._name    = name
-        self._params  = dict(DEFAULTS)
-        self._logger  = MagicMock()
-        self._clock   = MagicMock()
+        self._name = name
+        self._params = dict(DEFAULTS)
+        self._logger = MagicMock()
+        self._clock = MagicMock()
         self._clock.now.return_value.nanoseconds = 0
         self._clock.now.return_value.to_msg.return_value = MagicMock()
 
@@ -228,49 +252,63 @@ class _Node:
     def destroy_node(self):
         pass
 
+
 class _Duration:
     def __init__(self, seconds=0):
         self.seconds = seconds
+
 
 class _QoSProfile:
     def __init__(self, **kwargs):
         pass
 
+
 class _ReliabilityPolicy:
-    RELIABLE      = "RELIABLE"
-    BEST_EFFORT   = "BEST_EFFORT"
+    RELIABLE = "RELIABLE"
+    BEST_EFFORT = "BEST_EFFORT"
+
 
 class _DurabilityPolicy:
     TRANSIENT_LOCAL = "TRANSIENT_LOCAL"
-    VOLATILE        = "VOLATILE"
+    VOLATILE = "VOLATILE"
+
 
 rclpy_qos = _make_stub_module(
     "rclpy.qos",
-    QoSProfile             = _QoSProfile,
-    ReliabilityPolicy      = _ReliabilityPolicy,
-    DurabilityPolicy       = _DurabilityPolicy,
-    qos_profile_sensor_data= _QoSProfile(),
+    QoSProfile=_QoSProfile,
+    ReliabilityPolicy=_ReliabilityPolicy,
+    DurabilityPolicy=_DurabilityPolicy,
+    qos_profile_sensor_data=_QoSProfile(),
 )
-rclpy_node      = _make_stub_module("rclpy.node",      Node=_Node)
+rclpy_node = _make_stub_module("rclpy.node",      Node=_Node)
 rclpy_parameter = _make_stub_module("rclpy.parameter", Parameter=_Parameter)
-rclpy_duration  = _make_stub_module("rclpy.duration",  Duration=_Duration)
+rclpy_duration = _make_stub_module("rclpy.duration",  Duration=_Duration)
 
 rclpy_mod = _make_stub_module(
     "rclpy",
-    init     = MagicMock(),
-    spin     = MagicMock(),
-    shutdown = MagicMock(),
+    init=MagicMock(),
+    spin=MagicMock(),
+    shutdown=MagicMock(),
 )
-rclpy_mod.node      = rclpy_node
-rclpy_mod.qos       = rclpy_qos
+rclpy_mod.node = rclpy_node
+rclpy_mod.qos = rclpy_qos
 rclpy_mod.parameter = rclpy_parameter
-rclpy_mod.duration  = rclpy_duration
+rclpy_mod.duration = rclpy_duration
 
 # ── tf2 ──────────────────────────────────────────────────────────────────────
 
-class _LookupException(Exception):    pass
-class _ConnectivityException(Exception): pass
-class _ExtrapolationException(Exception): pass
+
+class _LookupException(Exception):
+    pass
+
+
+class _ConnectivityException(Exception):
+    pass
+
+
+class _ExtrapolationException(Exception):
+    pass
+
 
 class _Buffer:
     def __init__(self):
@@ -281,17 +319,19 @@ class _Buffer:
             return self._transform_fn(msg, target_frame)
         raise _LookupException("no transform registered")
 
+
 class _TransformListener:
     def __init__(self, buffer, node):
         pass
 
+
 tf2_ros_mod = _make_stub_module(
     "tf2_ros",
-    Buffer              = _Buffer,
-    TransformListener   = _TransformListener,
-    LookupException     = _LookupException,
-    ConnectivityException  = _ConnectivityException,
-    ExtrapolationException = _ExtrapolationException,
+    Buffer=_Buffer,
+    TransformListener=_TransformListener,
+    LookupException=_LookupException,
+    ConnectivityException=_ConnectivityException,
+    ExtrapolationException=_ExtrapolationException,
 )
 tf2_geometry_msgs_mod = _make_stub_module("tf2_geometry_msgs")
 
@@ -320,19 +360,20 @@ for _name, _mod in [
 # ─────────────────────────────────────────────────────────────────────────────
 # Now import the production module (stubs are in place)
 # ─────────────────────────────────────────────────────────────────────────────
-import importlib, pathlib, sys as _sys  # noqa: E402
+import sys as _sys  # noqa: E402
 
 # Allow running from repo root or alongside the node file
-_node_path = pathlib.Path(__file__).parent.parent / "rx26_roa" / "apf_node_v3.py"
+_node_path = pathlib.Path(__file__).parent.parent / \
+    "rx26_roa" / "apf_node_v3.py"
 _spec = importlib.util.spec_from_file_location("apf_node", _node_path)
 apf_module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(apf_module)
 
-Vector2D           = apf_module.Vector2D
-wrap_to_pi         = apf_module.wrap_to_pi
-clamp              = apf_module.clamp
-yaw_from_quaternion= apf_module.yaw_from_quaternion
-APFNode            = apf_module.APFNode
+Vector2D = apf_module.Vector2D
+wrap_to_pi = apf_module.wrap_to_pi
+clamp = apf_module.clamp
+yaw_from_quaternion = apf_module.yaw_from_quaternion
+APFNode = apf_module.APFNode
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Default param values (mirrors apf_node DEFAULT_* constants)
@@ -365,12 +406,12 @@ def node():
     DEFAULTS.update(_DEFAULT_PARAMS)
 
     with patch.object(apf_module.tf2_ros, "Buffer",           _Buffer), \
-         patch.object(apf_module.tf2_ros, "TransformListener", _TransformListener):
+            patch.object(apf_module.tf2_ros, "TransformListener", _TransformListener):
         n = APFNode()
 
     # Replace publishers with fresh mocks so call counts are per-test
-    n._pub_cmd          = MagicMock()
-    n._pub_debug        = MagicMock()
+    n._pub_cmd = MagicMock()
+    n._pub_debug = MagicMock()
     n._pub_goal_reached = MagicMock()
 
     return n
@@ -383,9 +424,9 @@ def node():
 def _make_pose(x=0.0, y=0.0, yaw=0.0, frame="map"):
     """Build a stub PoseWithCovarianceStamped with the given position and yaw."""
     msg = _PoseWithCovarianceStamped()
-    msg.header.frame_id       = frame
-    msg.pose.pose.position.x  = x
-    msg.pose.pose.position.y  = y
+    msg.header.frame_id = frame
+    msg.pose.pose.position.x = x
+    msg.pose.pose.position.y = y
     siny = math.sin(yaw / 2.0)
     cosy = math.cos(yaw / 2.0)
     msg.pose.pose.orientation.z = siny
@@ -395,9 +436,9 @@ def _make_pose(x=0.0, y=0.0, yaw=0.0, frame="map"):
 
 def _make_goal(x=5.0, y=0.0, frame="map"):
     msg = _PoseStamped()
-    msg.header.frame_id  = frame
-    msg.pose.position.x  = x
-    msg.pose.position.y  = y
+    msg.header.frame_id = frame
+    msg.pose.position.x = x
+    msg.pose.position.y = y
     return msg
 
 
@@ -409,9 +450,9 @@ def _make_grid(width=10, height=10, resolution=0.1,
     occupied_cells – list of (row, col) tuples to mark as occupied (value 100).
     All other cells default to 0 (free).
     """
-    grid            = _OccupancyGrid()
-    grid.info.width      = width
-    grid.info.height     = height
+    grid = _OccupancyGrid()
+    grid.info.width = width
+    grid.info.height = height
     grid.info.resolution = resolution
     grid.info.origin.position.x = origin_x
     grid.info.origin.position.y = origin_y
@@ -512,16 +553,20 @@ class TestYawFromQuaternion:
         return q
 
     def test_zero_yaw(self):
-        assert yaw_from_quaternion(self._q(0.0)) == pytest.approx(0.0, abs=1e-9)
+        assert yaw_from_quaternion(
+            self._q(0.0)) == pytest.approx(0.0, abs=1e-9)
 
     def test_90_degrees(self):
-        assert yaw_from_quaternion(self._q(math.pi / 2)) == pytest.approx(math.pi / 2, abs=1e-9)
+        assert yaw_from_quaternion(
+            self._q(math.pi / 2)) == pytest.approx(math.pi / 2, abs=1e-9)
 
     def test_180_degrees(self):
-        assert yaw_from_quaternion(self._q(math.pi)) == pytest.approx(math.pi, abs=1e-9)
+        assert yaw_from_quaternion(
+            self._q(math.pi)) == pytest.approx(math.pi, abs=1e-9)
 
     def test_minus_90_degrees(self):
-        assert yaw_from_quaternion(self._q(-math.pi / 2)) == pytest.approx(-math.pi / 2, abs=1e-9)
+        assert yaw_from_quaternion(
+            self._q(-math.pi / 2)) == pytest.approx(-math.pi / 2, abs=1e-9)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -677,7 +722,7 @@ class TestGoalReached:
         node._goal = _make_goal(x=0.05, y=0.0)
         node._control_loop()
         cmd = node._pub_cmd.publish.call_args[0][0]
-        assert cmd.linear.x  == pytest.approx(0.0)
+        assert cmd.linear.x == pytest.approx(0.0)
         assert cmd.angular.z == pytest.approx(0.0)
 
     def test_goal_reached_log_fires_once(self, node):
@@ -705,7 +750,7 @@ class TestGuardConditions:
         node._goal = _make_goal()
         node._control_loop()
         cmd = node._pub_cmd.publish.call_args[0][0]
-        assert cmd.linear.x  == pytest.approx(0.0)
+        assert cmd.linear.x == pytest.approx(0.0)
         assert cmd.angular.z == pytest.approx(0.0)
 
     def test_no_goal_publishes_zero(self, node):
@@ -713,7 +758,7 @@ class TestGuardConditions:
         node._goal = None
         node._control_loop()
         cmd = node._pub_cmd.publish.call_args[0][0]
-        assert cmd.linear.x  == pytest.approx(0.0)
+        assert cmd.linear.x == pytest.approx(0.0)
         assert cmd.angular.z == pytest.approx(0.0)
 
     def test_transform_failure_publishes_zero(self, node):
@@ -724,14 +769,14 @@ class TestGuardConditions:
         node._goal = _make_goal()
         node._control_loop()
         cmd = node._pub_cmd.publish.call_args[0][0]
-        assert cmd.linear.x  == pytest.approx(0.0)
+        assert cmd.linear.x == pytest.approx(0.0)
         assert cmd.angular.z == pytest.approx(0.0)
 
 
 class TestEscapePerturbation:
     def test_perturbation_changes_force(self, node):
         f_before = Vector2D(0.0, 0.0)
-        f_after  = node._apply_escape_perturbation(f_before)
+        f_after = node._apply_escape_perturbation(f_before)
         # Perturbation should move the vector away from the origin
         assert f_after.magnitude > 0.0
 
@@ -807,15 +852,15 @@ class TestPublishDebug:
     def test_debug_field_assignment(self, node):
         """_publish_debug populates the TwistStamped fields without raising."""
         f_total = Vector2D(3.0, 4.0)
-        f_att   = Vector2D(2.0, 0.0)
-        f_rep   = Vector2D(1.0, 4.0)
+        f_att = Vector2D(2.0, 0.0)
+        f_rep = Vector2D(1.0, 4.0)
         # Pre-seed progress history so angular.x is computable
         node._progress_history = [(0.0, 10.0), (1.0, 8.0)]
         # Should not raise
         node._publish_debug(f_total, f_att, f_rep, d_goal=7.5)
         assert node._pub_debug.publish.called
         msg = node._pub_debug.publish.call_args[0][0]
-        assert msg.twist.linear.x  == pytest.approx(f_total.magnitude)
-        assert msg.twist.linear.y  == pytest.approx(f_att.magnitude)
-        assert msg.twist.linear.z  == pytest.approx(f_rep.magnitude)
+        assert msg.twist.linear.x == pytest.approx(f_total.magnitude)
+        assert msg.twist.linear.y == pytest.approx(f_att.magnitude)
+        assert msg.twist.linear.z == pytest.approx(f_rep.magnitude)
         assert msg.twist.angular.y == pytest.approx(7.5)
