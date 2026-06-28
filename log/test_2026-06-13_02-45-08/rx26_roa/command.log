@@ -1,2 +1,0 @@
-Invoking command in '/home/ws/src/rx26_roa': PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest -v
-Invoked command in '/home/ws/src/rx26_roa' returned '0': PYTHONDONTWRITEBYTECODE=1 /usr/bin/python3 -m unittest -v
